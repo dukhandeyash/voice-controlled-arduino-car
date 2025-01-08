@@ -1,0 +1,199 @@
+#include <SoftwareSerial.h>
+
+SoftwareSerial BT(0, 1); //TX, RX respetively
+String readvoice;
+// Bluetooth Input
+char incoming_value = '0';
+
+// Input from Motor
+int ENA = 10;
+int IN1 = 9;
+int IN2 = 8;
+
+int IN3 = 5;
+int IN4 = 4;
+int ENB = 3;
+
+// Speed of the Motor
+int speed = 225;
+
+// Ultrasonic Sensor
+int trigPin = 11;
+int echoPin = 12;
+
+void setup()
+{
+  //for Bluetooth
+  BT.begin(9600);
+  Serial.begin(9600);
+
+  //for Motors
+  pinMode(ENA, OUTPUT);
+  pinMode(IN1, OUTPUT);
+  pinMode(IN2, OUTPUT);
+
+  pinMode(ENB, OUTPUT);
+  pinMode(IN3, OUTPUT);
+  pinMode(IN4, OUTPUT);
+
+  // For Ultrasonic
+  pinMode(trigPin, OUTPUT);
+  pinMode(echoPin, INPUT);
+
+  // Set the Initial Motor Speed
+  setSpeed(speed);
+}
+
+void loop()
+{
+  while (BT.available()){  //Check if there is an available byte to read
+  delay(10); //Delay added to make thing stable
+  char c = BT.read(); //Conduct a serial read
+  readvoice += c; //build the string- "forward", "reverse", "left" and "right"
+  } 
+  if (readvoice.length() > 0) {
+
+  if(readvoice == "*forward#")
+  {
+    forward();
+  }
+
+  else if(readvoice == "*back#")
+  {
+    backward();
+  }
+
+  else if (readvoice == "*left#")
+  {
+    left();
+  
+  }
+
+ else if ( readvoice == "*right#")
+ {
+   right();
+ }
+
+ else if (readvoice == "*stop#")
+ {
+   stop();
+ }
+ else if (readvoice == "*ultrasonic#"){
+  UltraSonic();
+ }
+
+ readvoice="";}
+  if(Serial.available() > 0)
+  {
+    delay(10);
+    incoming_value = Serial.read();
+
+      switch(incoming_value)
+      {
+        case 'F':
+        {
+          forward();
+          break;
+        }
+
+        case 'B':
+        {
+          backward();
+          break;
+        }
+
+        case 'L':
+        {
+          left();
+          break;
+        }
+
+        case 'R':
+        {
+          right();
+          break;
+        }
+
+        case 'S':
+        {
+          stop();
+          break;
+        }
+        case 'U':
+        {
+          UltraSonic();
+          break;
+          }
+      }
+    }
+  }
+
+void left()
+{
+  digitalWrite(IN1, LOW);
+  digitalWrite(IN2, HIGH);
+
+  digitalWrite(IN3, LOW);
+  digitalWrite(IN4, HIGH);
+  delay(40);
+}
+
+void right()
+{
+  digitalWrite(IN1, HIGH);
+  digitalWrite(IN2, LOW);
+
+  digitalWrite(IN3, HIGH);
+  digitalWrite(IN4, LOW);
+  delay(40);
+}
+
+void forward()
+{
+  digitalWrite(IN1, HIGH);
+  digitalWrite(IN2, LOW);
+
+  digitalWrite(IN3, LOW);
+  digitalWrite(IN4, HIGH);
+}
+
+void backward()
+{
+  digitalWrite(IN1, LOW);
+  digitalWrite(IN2, HIGH);
+
+  digitalWrite(IN3, HIGH);
+  digitalWrite(IN4, LOW);
+}
+
+void stop()
+{
+  digitalWrite(IN1, LOW);
+  digitalWrite(IN2, LOW);
+
+  digitalWrite(IN3, LOW);
+  digitalWrite(IN4, LOW);
+}
+
+void setSpeed(int speed)
+{
+  analogWrite(ENA, speed);
+  analogWrite(ENB, speed);
+}
+
+float UltraSonic()
+{
+  digitalWrite(trigPin, LOW);
+  delayMicroseconds(2);
+  digitalWrite(trigPin, HIGH);
+  delayMicroseconds(10);
+  digitalWrite(trigPin, LOW);
+
+  float duration = pulseIn(echoPin, HIGH);
+
+  float distance = (duration / 2)* 0.0343;
+
+  Serial.println(distance);
+
+  return distance;
+}
